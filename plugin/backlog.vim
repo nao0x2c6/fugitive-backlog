@@ -12,15 +12,15 @@ function! s:backlog_url(opts, ...) abort
   for domain in domains
     let domain_pattern .= '\|' . escape(split(domain, '://')[-1], '.')
   endfor
-  let repo = matchstr(a:opts.remote, '^\%(https\=://\%([^@/:]*@\)\=\|git://\|\w\+@\|ssh://git@\)\=\zs\('.domain_pattern.'\)[/:].\{-\}\ze\%(\.git\)\=/\=$')
-  if repo ==# ''
+  let base = matchstr(a:opts.remote, '^\%(https\=://\%([^@/:]*@\)\=\|git://\|\w\+@\|ssh://git@\)\=\zs\('.domain_pattern.'\)[/:].\{-\}\ze\%(\.git\)\=/\=$')
+  if base ==# ''
     return ''
   endif
 
-  let repo = substitute(repo, '\(' . domain_pattern . '\):', '\1','')
-  let repo = substitute(repo, domain_pattern, '&/git','')
-  let repo = substitute(repo,'\.git\.','.','')
-  let root = 'https://' . substitute(repo,':','/','')
+  let base = substitute(base, '\(' . domain_pattern . '\)\%(/git\|:\)', '\1','')
+  let base = substitute(base, domain_pattern, '&/git','')
+  let base = substitute(base,'\.git\.','.','')
+  let root = 'https://' . substitute(base,':','/','')
 
   if path =~# '^\.git/refs/heads/'
     return root . '/commits/' . path[16:-1]

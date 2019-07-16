@@ -2,25 +2,26 @@ function! s:function(name) abort
   return function(substitute(a:name,'^s:',matchstr(expand('<sfile>'), '<SNR>\d\+_'),''))
 endfunction
 
-function! s:bitbucket_url(opts, ...) abort
+function! s:backlog_url(opts, ...) abort
   if a:0 || type(a:opts) != type({})
     return ''
   endif
   let path = substitute(a:opts.path, '^/', '', '')
-  let domain_pattern = 'bitbucket\.org'
-  let domains = exists('g:fugitive_bitbucket_domains') ? g:fugitive_bitbucket_domains : []
+  let domain_pattern = '\w\+\.\%(git\.\)\=backlog\.jp'
+  let domains = exists('g:fugitive_backlog_domains') ? g:fugitive_backlog_domains : []
   for domain in domains
     let domain_pattern .= '\|' . escape(split(domain, '://')[-1], '.')
   endfor
-  let repo = matchstr(a:opts.remote,'^\%(https\=://\|git://\|\(ssh://\)\=git@\)\%(.\{-\}@\)\=\zs\('.domain_pattern.'\)[/:].\{-\}\ze\%(\.git\)\=$')
+  let repo = matchstr(a:opts.remote, '^\%(https\=://\%([^@/:]*@\)\=\|git://\|\w\+@\|ssh://git@\)\=\zs\('.domain_pattern.'\)[/:].\{-\}\ze\%(\.git\)\=/\=$')
   if repo ==# ''
     return ''
   endif
-  if index(domains, 'http://' . matchstr(repo, '^[^:/]*')) >= 0
-    let root = 'http://' . substitute(repo,':','/','')
-  else
-    let root = 'https://' . substitute(repo,':','/','')
-  endif
+
+  let repo = substitute(repo, '\(' . domain_pattern . '\):', '\1','')
+  let repo = substitute(repo, domain_pattern, '&/git','')
+  let repo = substitute(repo,'\.git\.','.','')
+  let root = 'https://' . substitute(repo,':','/','')
+
   if path =~# '^\.git/refs/heads/'
     return root . '/commits/' . path[16:-1]
   elseif path =~# '^\.git/refs/tags/'
@@ -38,11 +39,11 @@ function! s:bitbucket_url(opts, ...) abort
   if get(a:opts, 'type', '') ==# 'tree' || a:opts.path =~# '/$'
     let url = s:sub(root . '/src/' . commit . '/' . path,'/$','')
   elseif get(a:opts, 'type', '') ==# 'blob' || a:opts.path =~# '[^/]$'
-    let url = root . '/src/' . commit . '/' . path
+    let url = root . '/blob/' . commit . '/' . path
     if get(a:opts, 'line1')
-      let url .= '#' . fnamemodify(path, ':t') . '-' . a:opts.line1
+      let url .= '#' . a:opts.line1
       if get(a:opts, 'line2')
-        let url .= ':' . a:opts.line2
+        let url .= '-' . a:opts.line2
       endif
     endif
   else
@@ -55,4 +56,4 @@ if !exists('g:fugitive_browse_handlers')
   let g:fugitive_browse_handlers = []
 endif
 
-call insert(g:fugitive_browse_handlers, s:function('s:bitbucket_url'))
+call insert(g:fugitive_browse_handlers, s:function('s:backlog_url'))

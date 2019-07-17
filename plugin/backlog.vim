@@ -7,12 +7,12 @@ function! s:backlog_url(opts, ...) abort
     return ''
   endif
   let path = substitute(a:opts.path, '^/', '', '')
-  let domain_pattern = '\w\+\.\%(git\.\)\=backlog\.jp'
+  let domain_pattern = '[-0-9a-zA-Z]\+\.\%(git\.\)\=backlog\.\%(jp\|com\)'
   let domains = exists('g:fugitive_backlog_domains') ? g:fugitive_backlog_domains : []
   for domain in domains
     let domain_pattern .= '\|' . escape(split(domain, '://')[-1], '.')
   endfor
-  let base = matchstr(a:opts.remote, '^\%(https\=://\%([^@/:]*@\)\=\|git://\|\w\+@\|ssh://git@\)\=\zs\('.domain_pattern.'\)[/:].\{-\}\ze\%(\.git\)\=/\=$')
+  let base = matchstr(a:opts.remote, '^\%(https\=://\%([^@/:]*@\)\=\|git://\|[-0-9a-zA-Z]\+@\|ssh://git@\)\=\zs\('.domain_pattern.'\)[/:].\{-\}\ze\%(\.git\)\=/\=$')
   if base ==# ''
     return ''
   endif
@@ -23,9 +23,11 @@ function! s:backlog_url(opts, ...) abort
   let root = 'https://' . substitute(base,':','/','')
 
   if path =~# '^\.git/refs/heads/'
-    return root . '/commits/' . path[16:-1]
+    return root . '/commit/' . path[16:-1]
   elseif path =~# '^\.git/refs/tags/'
-    return root . '/src/' .path[15:-1]
+    return root . '/tree/' .path[15:-1]
+  elseif path =~# '^\.git/refs/remotes/[^/]\+/.'
+    return root . '/tree/' . matchstr(path,'remotes/[^/]\+/\zs.*')
   elseif path =~# '.git/\%(config$\|hooks\>\)'
     return root . '/admin'
   elseif path =~# '^\.git\>'
@@ -37,9 +39,10 @@ function! s:backlog_url(opts, ...) abort
     let commit = a:opts.commit
   endif
   if get(a:opts, 'type', '') ==# 'tree' || a:opts.path =~# '/$'
-    let url = s:sub(root . '/src/' . commit . '/' . path,'/$','')
+    let url = substitute(root . '/tree/' . commit . '/' . path, '/$', '', 'g')
   elseif get(a:opts, 'type', '') ==# 'blob' || a:opts.path =~# '[^/]$'
-    let url = root . '/blob/' . commit . '/' . path
+    let escaped_commit = substitute(commit, '#', '%23', 'g')
+    let url = root . '/blob/' . escaped_commit . '/' . path
     if get(a:opts, 'line1')
       let url .= '#' . a:opts.line1
       if get(a:opts, 'line2')
@@ -47,7 +50,7 @@ function! s:backlog_url(opts, ...) abort
       endif
     endif
   else
-    let url = root . '/commits/' . commit
+    let url = root . '/commit/' . commit
   endif
   return url
 endfunction

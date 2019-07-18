@@ -7,7 +7,7 @@ function! s:backlog_url(opts, ...) abort
     return ''
   endif
   let path = substitute(a:opts.path, '^/', '', '')
-  let domain_pattern = '[-0-9a-zA-Z]\+\.\%(git\.\)\=backlog\.\%(jp\|com\)'
+  let domain_pattern = '[-0-9a-zA-Z]\+\.\%(git\.\)\=backlog\%(tool\)\=\.\%(jp\|com\)'
   let domains = exists('g:fugitive_backlog_domains') ? g:fugitive_backlog_domains : []
   for domain in domains
     let domain_pattern .= '\|' . escape(split(domain, '://')[-1], '.')

@@ -1,4 +1,4 @@
-fubitive.vim
+vim-backlog
 ============
 
 Extend [fugitive.vim](https://github.com/tpope/vim-fugitive) to support

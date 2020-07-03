@@ -2,4 +2,4 @@ fugitive-backlog
 ============
 
 Extend [fugitive.vim](https://github.com/tpope/vim-fugitive) to support
-Bitbucket URLs in `:Gbrowse`.
+[Backlog](https://backlog.com/) URLs in `:Gbrowse`.
